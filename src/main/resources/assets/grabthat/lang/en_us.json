@@ -1,0 +1,16 @@
+{
+  "grabthat.configuration.title": "Grab That Configs",
+  "grabthat.configuration.section.grabthat.common.toml": "Grab That Configs",
+  "grabthat.configuration.section.grabthat.common.toml.title": "Grab That Configs",
+  "grabthat.configuration.items": "Item List",
+  "grabthat.configuration.logDirtBlock": "Log Dirt Block",
+  "grabthat.configuration.magicNumberIntroduction": "Magic Number Text",
+  "grabthat.configuration.magicNumber": "Magic Number",
+
+  "key.categories.grabthat": "Grab That",
+  "key.grabthat.grab": "Grab - Key",
+
+  "grabthat.help.pickup": "Press the Grab key or combo (e.g. Shift + R) to pick up, press it again to place down. Shift + Right Click also drops",
+  "grabthat.help.drop": "Shift + Right Click to drop what you are carrying",
+  "grabthat.help.aim": "Hold Right Click to aim, release to throw"
+}
