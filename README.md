@@ -1,25 +1,26 @@
+<img width="850" height="155" alt="grabthat" src="https://github.com/user-attachments/assets/efa7eabd-8b36-430e-b8ad-08430ef73ec4" />
 
-Installation information
-=======
+Ever looked at a mob and thought, “I wonder how far I could throw that?”
+Now you can find out.
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+Pick up entities, and launch them across the room because apparently that's a perfectly reasonable solution. Rearrange your base, move functional blocks, relocate villagers, toss your friends, or yeet a creeper somewhere it absolutely shouldn't be.
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+If it can be grabbed, and its alive it can probably be thrown.
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
+**Grab it. Move it. Yeet it.**
+====================================================
 
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
+P.S. Inspired by "Carry On" but with some twists :)
 
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+
+Feel free to use in your modpacks!
+
+<img width="850" height="111" alt="image" src="https://github.com/user-attachments/assets/9ead9b68-629c-4b46-98db-4ae36da11e93" />
+
+https://discord.gg/UD388S7gZP
+
+
+Contact the Developer on Discord :
+@nikitarich.
+
+(Bug reports to @ghotewsleep on Discord)
