@@ -9,9 +9,7 @@ import net.minecraftforge.client.settings.KeyModifier;
 public class GrabThatKeyMapping extends KeyMapping {
 
     public GrabThatKeyMapping(String name, KeyModifier modifier, InputConstants.Type type, int keyCode, String category) {
-        super(name, type, keyCode, category);
-        setKeyConflictContext(KeyConflictContext.IN_GAME);
-        setKeyModifierAndCode(modifier, InputConstants.getKey(keyCode, 0));
+        super(name, KeyConflictContext.IN_GAME, modifier, type, keyCode, category);
     }
 
     @Override
