@@ -250,6 +250,7 @@ public class CarryClientEvents {
     }
 
     private static void handleGrabKey(Minecraft mc) {
+        if (mc.options.keyUse.isDown()) return;
         boolean down = ModKeybinds.GRAB_KEY.isDown();
         if (down && !grabKeyDown && mc.screen == null) {
             if (PickupConfig.isEnabled()) {

@@ -2,7 +2,7 @@
   "key.categories.grabthat": "Grab That",
   "key.grabthat.grab": "Grab - Key",
 
-  "grabthat.help.pickup": "Press the Grab key or combo (e.g. Shift + R) to pick up, press it again to place down. Shift + Right Click also drops",
+  "grabthat.help.pickup": "Press the Grab key (default R) to pick up, press it again to place down. Shift + Right Click also drops",
   "grabthat.help.drop": "Shift + Right Click to drop what you are carrying",
   "grabthat.help.aim": "Hold Right Click to aim, release to throw"
 }
