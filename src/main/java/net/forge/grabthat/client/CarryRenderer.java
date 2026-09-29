@@ -20,8 +20,10 @@ import net.minecraft.client.resources.model.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.AbstractChestBlock;
 import net.minecraft.world.level.block.ChestBlock;
@@ -52,7 +54,7 @@ public class CarryRenderer {
 
     @SubscribeEvent
     public static void onRenderLivingPre(RenderLivingEvent.Pre<?, ?> event) {
-        net.minecraft.world.entity.Entity entity = event.getEntity();
+        Entity entity = event.getEntity();
         if (!isCarriedMob(entity)) return;
 
         if (entity instanceof LivingEntity living) {
@@ -62,7 +64,7 @@ public class CarryRenderer {
             float partialTick = event.getPartialTick();
             float yaw = Mth.rotLerp(partialTick, living.yBodyRotO, living.yBodyRot);
 
-            if (!(living instanceof net.minecraft.world.entity.animal.Chicken)) {
+            if (!(living instanceof Chicken)) {
                 boolean upright = CarryUtil.isUprightMob(living);
 
                 if (upright) {

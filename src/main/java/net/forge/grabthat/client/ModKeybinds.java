@@ -5,15 +5,16 @@ import org.lwjgl.glfw.GLFW;
 import com.mojang.blaze3d.platform.InputConstants;
 
 import net.minecraft.client.KeyMapping;
+import net.minecraftforge.client.settings.KeyModifier;
 
-public final class ModKeybinds {
-    public static final String CATEGORY = "key.categories.grabthat";
+public class ModKeybinds {
 
-    public static final KeyMapping GRAB_KEY = new KeyMapping(
+    public static final KeyMapping GRAB_KEY = new GrabThatKeyMapping(
             "key.grabthat.grab",
+            KeyModifier.SHIFT,
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_R,
-            CATEGORY);
+            "key.categories.grabthat");
 
     private ModKeybinds() {}
 }

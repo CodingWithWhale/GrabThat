@@ -14,6 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -22,6 +23,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.client.event.InputEvent;
 
 public class CarryClientEvents {
 
@@ -37,7 +39,7 @@ public class CarryClientEvents {
     }
 
     @SubscribeEvent
-    public static void onInteractionTriggered(net.minecraftforge.client.event.InputEvent.InteractionKeyMappingTriggered event) {
+    public static void onInteractionTriggered(InputEvent.InteractionKeyMappingTriggered event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         LocalPlayer player = mc.player;
@@ -46,8 +48,7 @@ public class CarryClientEvents {
         if (data.isEmpty()) return;
 
         if (event.isUseItem()) {
-            if (isShiftDown(mc)) {
-                ModNetwork.sendToServer(new DropPacket());
+            if (ModKeybinds.GRAB_KEY.isDown()) {
                 event.setSwingHand(false);
                 event.setCanceled(true);
                 return;
@@ -242,7 +243,7 @@ public class CarryClientEvents {
     private static boolean isCarryableEntity(Entity entity) {
         return entity instanceof LivingEntity living
                 && !(living instanceof Player)
-                && !(living instanceof net.minecraft.world.entity.decoration.ArmorStand);
+                && !(living instanceof ArmorStand);
     }
 
     private static boolean isShiftDown(Minecraft mc) {
@@ -250,7 +251,6 @@ public class CarryClientEvents {
     }
 
     private static void handleGrabKey(Minecraft mc) {
-        if (mc.options.keyUse.isDown()) return;
         boolean down = ModKeybinds.GRAB_KEY.isDown();
         if (down && !grabKeyDown && mc.screen == null) {
             if (PickupConfig.isEnabled()) {

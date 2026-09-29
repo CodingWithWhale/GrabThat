@@ -21,8 +21,4 @@ public class CarryClientContext {
     public static CarryData get(UUID playerUUID) {
         return CARRY_DATA.getOrDefault(playerUUID, CarryData.EMPTY);
     }
-
-    public static void clear() {
-        CARRY_DATA.clear();
-    }
 }

@@ -112,8 +112,4 @@ public final class ModNetwork {
     public static void sendToServer(Object msg) {
         channel.sendToServer(msg);
     }
-
-    public static SimpleChannel channel() {
-        return channel;
-    }
 }

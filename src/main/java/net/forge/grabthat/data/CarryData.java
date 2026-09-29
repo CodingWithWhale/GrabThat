@@ -35,10 +35,6 @@ public class CarryData {
         this(carryType, entityId, entityUUID, blockState, null, blockContents, blockPos, null, null, null);
     }
 
-    public CarryData(CarryType carryType, int entityId, UUID entityUUID, BlockState blockState, BlockState secondBlockState, List<ItemStack> blockContents, BlockPos blockPos, CompoundTag blockNbt) {
-        this(carryType, entityId, entityUUID, blockState, secondBlockState, blockContents, blockPos, null, blockNbt, null);
-    }
-
     public CarryData(CarryType carryType, int entityId, UUID entityUUID, BlockState blockState, BlockState secondBlockState, List<ItemStack> blockContents, BlockPos blockPos, BlockPos secondBlockPos, CompoundTag blockNbt, CompoundTag secondBlockNbt) {
         this.carryType = carryType;
         this.entityId = entityId;
@@ -111,7 +107,6 @@ public class CarryData {
 
     public CarryType carryType() { return carryType; }
     public int entityId() { return entityId; }
-    public UUID entityUUID() { return entityUUID; }
     public BlockState blockState() { return blockState; }
     public BlockState secondBlockState() { return secondBlockState; }
     public List<ItemStack> blockContents() { return blockContents; }
