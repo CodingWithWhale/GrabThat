@@ -38,7 +38,8 @@ public final class CarryHeights {
                 .then(Commands.literal("reload")
                         .executes(ctx -> {
                             load();
-                            ctx.getSource().sendSuccess(() -> Component.literal("Carry heights reloaded"), true);
+                            UnpickupableMobs.load();
+                            ctx.getSource().sendSuccess(() -> Component.literal("GrabThat data reloaded"), true);
                             return 1;
                         })));
     }

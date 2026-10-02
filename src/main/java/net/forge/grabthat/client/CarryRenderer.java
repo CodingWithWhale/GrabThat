@@ -35,7 +35,7 @@ import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
-import net.minecraftforge.common.MinecraftForge;
+import static net.minecraftforge.common.MinecraftForge.EVENT_BUS;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class CarryRenderer {
@@ -49,7 +49,7 @@ public class CarryRenderer {
     private CarryRenderer() {}
 
     public static void register() {
-        MinecraftForge.EVENT_BUS.register(CarryRenderer.class);
+        EVENT_BUS.register(CarryRenderer.class);
     }
 
     @SubscribeEvent

@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import net.forge.grabthat.config.UnpickupableMobs;
 import net.forge.grabthat.data.CarryData;
 import net.forge.grabthat.data.CarryType;
 import net.forge.grabthat.storage.CarryDataStorage;
@@ -19,7 +19,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -40,14 +39,6 @@ public final class CarryPayloadHandler {
 
     public static final Map<Integer, Integer> THROWN_REMAINING = new HashMap<>();
 
-    public static final Set<EntityType<?>> UNCARRYABLE = Set.of(
-            EntityType.ENDER_DRAGON,
-            EntityType.WITHER,
-            EntityType.WARDEN,
-            EntityType.ELDER_GUARDIAN,
-            EntityType.GHAST
-    );
-
     private CarryPayloadHandler() {}
 
     public static void handlePickupEntity(Player player, PickupEntityPacket msg) {
@@ -66,7 +57,7 @@ public final class CarryPayloadHandler {
 
         if (!isPlayer && !isMob) return;
 
-        if (UNCARRYABLE.contains(target.getType())) return;
+        if (UnpickupableMobs.isUnpickupable(target.getType())) return;
 
         if (isPlayer) {
             Player other = (Player) target;
@@ -121,7 +112,11 @@ public final class CarryPayloadHandler {
 
         BlockPos pos = msg.blockPos();
         if (!serverPlayer.level().mayInteract(serverPlayer, pos)) return;
-        if (!inPickupRange(serverPlayer, pos)) return;
+        if (!inPickupRange(serverPlayer, pos)) {
+            serverPlayer.displayClientMessage(Component
+                    .literal("\u00a7cYou are too far to pick this block up!"), true);
+            return;
+        }
 
         BlockState worldState = serverPlayer.level().getBlockState(pos);
         if (!CarryUtil.isUtilityBlockWithPart(serverPlayer.level(), pos)) return;
@@ -233,7 +228,10 @@ public final class CarryPayloadHandler {
         float power = Math.max(0f, Math.min(1f, msg.power()));
 
         if (carry.carryType() == CarryType.BLOCK) {
-            placeBlock(serverPlayer, carry);
+            if (!placeBlock(serverPlayer, carry)) {
+                ModNetwork.sendCarrySync(serverPlayer);
+                return;
+            }
         } else {
             throwEntity(serverPlayer, carry, power);
         }
@@ -248,7 +246,10 @@ public final class CarryPayloadHandler {
         if (carry.isEmpty()) return;
 
         if (carry.carryType() == CarryType.BLOCK) {
-            placeBlock(serverPlayer, carry);
+            if (!placeBlock(serverPlayer, carry)) {
+                ModNetwork.sendCarrySync(serverPlayer);
+                return;
+            }
         } else {
             releaseEntity(serverPlayer, carry);
         }
@@ -278,27 +279,15 @@ public final class CarryPayloadHandler {
         }
     }
 
-    private static void placeBlock(ServerPlayer player, CarryData carry) {
+    private static boolean placeBlock(ServerPlayer player, CarryData carry) {
         BlockState state = carry.blockState();
-        if (state == null) return;
+        if (state == null) return false;
 
-        BlockPos placePos = null;
         HitResult hit = player.pick(4.5, 0.0F, false);
-        if (hit.getType() == HitResult.Type.BLOCK) {
-            BlockHitResult blockHit = (BlockHitResult) hit;
-            BlockPos placed = blockHit.getBlockPos().relative(blockHit.getDirection());
-            if (player.level().isEmptyBlock(placed)) {
-                placePos = placed;
-            }
-        }
-        if (placePos == null) {
-            placePos = player.blockPosition().relative(player.getDirection(), 2);
-            for (int attempt = 0; attempt < 3; attempt++) {
-                if (player.level().isEmptyBlock(placePos)) break;
-                placePos = placePos.above();
-            }
-        }
-        if (placePos == null || !player.level().isEmptyBlock(placePos)) return;
+        if (hit.getType() != HitResult.Type.BLOCK) return false;
+        BlockHitResult blockHit = (BlockHitResult) hit;
+        BlockPos placePos = blockHit.getBlockPos().relative(blockHit.getDirection());
+        if (!player.level().isEmptyBlock(placePos)) return false;
 
         BlockState placeState = state;
         if (placeState.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
@@ -315,7 +304,7 @@ public final class CarryPayloadHandler {
         if (doubleChest) {
             Direction pairDir = ChestBlock.getConnectedDirection(placeState);
             BlockPos secondPos = placePos.relative(pairDir);
-            if (!player.level().isEmptyBlock(secondPos)) return;
+            if (!player.level().isEmptyBlock(secondPos)) return false;
             BlockState secondPlaceState = placeState.setValue(ChestBlock.TYPE,
                     placeState.getValue(ChestBlock.TYPE).getOpposite());
 
@@ -340,7 +329,7 @@ public final class CarryPayloadHandler {
                 }
                 secondBe.setChanged();
             }
-            return;
+            return true;
         }
 
         if (secondState != null) {
@@ -355,7 +344,7 @@ public final class CarryPayloadHandler {
             if (offset != null) {
                 secondPlacePos = placePos.offset(offset);
             }
-            if (secondPlacePos == null || !player.level().isEmptyBlock(secondPlacePos)) return;
+            if (secondPlacePos == null || !player.level().isEmptyBlock(secondPlacePos)) return false;
 
             boolean primaryIsBase = true;
             if (placeState.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)) {
@@ -384,7 +373,7 @@ public final class CarryPayloadHandler {
                 secondBe.load(carry.secondBlockNbt());
                 secondBe.setChanged();
             }
-            return;
+            return true;
         }
 
         player.level().setBlockAndUpdate(placePos, placeState);
@@ -415,10 +404,11 @@ public final class CarryPayloadHandler {
             }
             be.setChanged();
         }
+        return true;
     }
 
     private static boolean inPickupRange(ServerPlayer player, BlockPos pos) {
-        return player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) <= 64.0;
+        return player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) <= 9.0;
     }
 
     private static void throwEntity(ServerPlayer player, CarryData carry, float power) {

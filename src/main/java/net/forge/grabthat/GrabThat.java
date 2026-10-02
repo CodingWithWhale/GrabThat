@@ -2,6 +2,7 @@ package net.forge.grabthat;
 
 import net.forge.grabthat.client.GrabThatClient;
 import net.forge.grabthat.config.CarryHeights;
+import net.forge.grabthat.config.UnpickupableMobs;
 import net.forge.grabthat.event.CarryEvents;
 import net.forge.grabthat.network.ModNetwork;
 import net.minecraftforge.common.MinecraftForge;
@@ -25,5 +26,6 @@ public class GrabThat {
         MinecraftForge.EVENT_BUS.addListener(CarryEvents::onEntityMount);
         MinecraftForge.EVENT_BUS.addListener(CarryHeights::onServerStarted);
         MinecraftForge.EVENT_BUS.addListener(CarryHeights::onRegisterCommands);
+        MinecraftForge.EVENT_BUS.addListener(UnpickupableMobs::onServerStarted);
     }
 }
