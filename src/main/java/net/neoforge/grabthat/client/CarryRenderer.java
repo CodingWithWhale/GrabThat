@@ -15,18 +15,23 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.AbstractChestBlock;
+import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.EnderChestBlock;
 import net.minecraft.world.level.block.TrappedChestBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.ChestType;
@@ -39,6 +44,7 @@ import net.neoforged.neoforge.common.NeoForge;
 public class CarryRenderer {
 
     private static final float CARRIED_SCALE = 0.6f;
+    private static final float BED_Y_OFFSET = -0.7f;
 
     private static ModelPart singleChestModel;
     private static ModelPart doubleChestLeftModel;
@@ -139,56 +145,90 @@ public class CarryRenderer {
         double by = pos.y + 2.05;
         double bz = pos.z;
 
-        renderSingleCarriedBlock(state, bx, by, bz, CARRIED_SCALE, player, poseStack, buffer, camX, camY, camZ);
-
-        BlockState secondState = data.secondBlockState();
-        if (secondState != null) {
-            BlockPos offset = CarryUtil.secondPartOffset(state, data.blockPos(), data.secondBlockPos());
-            if (offset != null) {
-                renderSingleCarriedBlock(secondState,
-                        bx + offset.getX() * CARRIED_SCALE, by + offset.getY() * CARRIED_SCALE,
-                        bz + offset.getZ() * CARRIED_SCALE,
-                        CARRIED_SCALE, player, poseStack, buffer, camX, camY, camZ);
-            }
-        }
-
-        buffer.endBatch();
-    }
-
-    private static void renderSingleCarriedBlock(BlockState state, double bx, double by, double bz, float scale,
-                                                 Player player, PoseStack poseStack,
-                                                 MultiBufferSource.BufferSource buffer,
-                                                 double camX, double camY, double camZ) {
-        Minecraft mc = Minecraft.getInstance();
-        BlockRenderDispatcher blockRenderer = mc.getBlockRenderer();
+        int packedLight = getPackedLight(player, BlockPos.containing(bx, by, bz));
 
         poseStack.pushPose();
         poseStack.translate(bx - camX, by - camY, bz - camZ);
+        poseStack.mulPose(Axis.YP.rotationDegrees(facingYaw(player, state) - player.getYRot()));
+        poseStack.scale(CARRIED_SCALE, CARRIED_SCALE, CARRIED_SCALE);
 
-        Direction facing = state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)
-                ? state.getValue(BlockStateProperties.HORIZONTAL_FACING) : null;
-        float facingYaw;
-        if (facing != null) {
-            facingYaw = switch (facing) {
-                case EAST -> -90f;
-                case SOUTH -> 0f;
-                case WEST -> 90f;
-                default -> 180f;
-            };
+        if (state.getBlock() instanceof BedBlock && state.hasProperty(BedBlock.PART)) {
+            renderCarriedBed(player, data, state, poseStack, buffer, packedLight);
         } else {
-            facingYaw = player.getYRot();
-        }
-        poseStack.mulPose(Axis.YP.rotationDegrees(facingYaw - player.getYRot()));
-        poseStack.scale(scale, scale, scale);
-        poseStack.translate(-0.5, -0.5, -0.5);
+            poseStack.translate(-0.5, -0.5, -0.5);
+            BlockRenderDispatcher blockRenderer = mc.getBlockRenderer();
+            blockRenderer.renderSingleBlock(state, poseStack, buffer, packedLight,
+                    OverlayTexture.NO_OVERLAY,
+                    net.neoforged.neoforge.client.model.data.ModelData.EMPTY,
+                    null);
 
-        blockRenderer.renderSingleBlock(state, poseStack, buffer,
-                getPackedLight(player, BlockPos.containing(bx, by, bz)),
-                OverlayTexture.NO_OVERLAY,
-                net.neoforged.neoforge.client.model.data.ModelData.EMPTY,
-                null);
+            BlockState secondState = data.secondBlockState();
+            if (secondState != null) {
+                BlockPos offset = CarryUtil.secondPartOffset(state, data.blockPos(), data.secondBlockPos());
+                if (offset != null) {
+                    poseStack.pushPose();
+                    poseStack.translate(offset.getX(), offset.getY(), offset.getZ());
+                    blockRenderer.renderSingleBlock(secondState, poseStack, buffer, packedLight,
+                            OverlayTexture.NO_OVERLAY,
+                            net.neoforged.neoforge.client.model.data.ModelData.EMPTY,
+                            null);
+                    poseStack.popPose();
+                }
+            }
+        }
 
         poseStack.popPose();
+        buffer.endBatch();
+    }
+
+    private static void renderCarriedBed(Player player, CarryData data, BlockState state,
+                                         PoseStack poseStack, MultiBufferSource.BufferSource buffer,
+                                         int packedLight) {
+        BlockState secondState = data.secondBlockState();
+        BlockPos offset = CarryUtil.secondPartOffset(state, data.blockPos(), data.secondBlockPos());
+        if (secondState == null || offset == null) return;
+
+        poseStack.pushPose();
+        poseStack.translate(-(offset.getX() * 0.5 + 0.5), BED_Y_OFFSET, -(offset.getZ() * 0.5 + 0.5));
+
+        renderBedPart(player, data.blockNbt(), state, poseStack, buffer, packedLight);
+
+        poseStack.pushPose();
+        poseStack.translate(offset.getX(), offset.getY(), offset.getZ());
+        renderBedPart(player, data.secondBlockNbt(), secondState, poseStack, buffer, packedLight);
+        poseStack.popPose();
+
+        poseStack.popPose();
+    }
+
+    private static void renderBedPart(Player player, CompoundTag nbt, BlockState state,
+                                      PoseStack poseStack, MultiBufferSource.BufferSource buffer,
+                                      int packedLight) {
+        BlockEntity be = BlockEntityType.BED.create(BlockPos.ZERO, state);
+        if (be == null) return;
+
+        be.setLevel(player.level());
+        if (nbt != null) {
+            be.loadWithComponents(nbt, player.level().registryAccess());
+        }
+
+        BlockEntityRenderer<BlockEntity> renderer =
+                Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(be);
+        if (renderer == null) return;
+
+        renderer.render(be, 0.0F, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
+    }
+
+    private static float facingYaw(Player player, BlockState state) {
+        Direction facing = state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)
+                ? state.getValue(BlockStateProperties.HORIZONTAL_FACING) : null;
+        if (facing == null) return 0.0f;
+        return switch (facing) {
+            case EAST -> -90f;
+            case SOUTH -> 0f;
+            case WEST -> 90f;
+            default -> 180f;
+        };
     }
 
     private static void renderCarriedChest(Player player, CarryData data, PoseStack poseStack,
