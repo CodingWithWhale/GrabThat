@@ -91,15 +91,14 @@ public final class CarryUtil {
 
         if (state.hasProperty(BedBlock.PART)) {
             BedPart part = state.getValue(BedBlock.PART);
-            for (Direction dir : Direction.Plane.HORIZONTAL) {
-                BlockPos other = pos.relative(dir);
-                BlockState otherState = level.getBlockState(other);
-                if (otherState.getBlock() == block
-                        && otherState.hasProperty(BedBlock.PART)
-                        && otherState.getValue(BedBlock.PART) != part) {
-                    return other;
-                }
+            BlockPos other = pos.relative(BedBlock.getConnectedDirection(state));
+            BlockState otherState = level.getBlockState(other);
+            if (otherState.getBlock() == block
+                    && otherState.hasProperty(BedBlock.PART)
+                    && otherState.getValue(BedBlock.PART) != part) {
+                return other;
             }
+            return null;
         }
 
         BlockPos above = pos.above();

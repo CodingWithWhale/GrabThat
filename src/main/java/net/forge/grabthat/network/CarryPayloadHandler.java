@@ -19,16 +19,22 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AbstractChestBlock;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BedPart;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.phys.BlockHitResult;
@@ -198,13 +204,16 @@ public final class CarryPayloadHandler {
             }
         }
 
-        if (be != null) serverPlayer.level().removeBlockEntity(pos);
-        serverPlayer.level().removeBlock(pos, false);
-        if (secondPos != null) {
-            if (serverPlayer.level().getBlockEntity(secondPos) != null) {
-                serverPlayer.level().removeBlockEntity(secondPos);
-            }
-            serverPlayer.level().removeBlock(secondPos, false);
+        boolean primaryIsHead = worldState.hasProperty(BedBlock.PART)
+                && worldState.getValue(BedBlock.PART) == BedPart.HEAD;
+        removeCarriedPart(serverPlayer.level(), primaryIsHead ? secondPos : pos);
+        removeCarriedPart(serverPlayer.level(), primaryIsHead ? pos : secondPos);
+
+        if (!serverPlayer.level().getBlockState(pos).isAir()
+                || (secondPos != null && !serverPlayer.level().getBlockState(secondPos).isAir())) {
+            restoreCarriedPart(serverPlayer.level(), pos, worldState, blockNbt);
+            restoreCarriedPart(serverPlayer.level(), secondPos, secondState, secondBlockNbt);
+            return;
         }
 
         CarryData newData = new CarryData(CarryType.BLOCK, -1, null, state, secondState, contents, pos, secondPos, blockNbt, secondBlockNbt);
@@ -405,6 +414,25 @@ public final class CarryPayloadHandler {
             be.setChanged();
         }
         return true;
+    }
+
+    private static void removeCarriedPart(Level level, BlockPos pos) {
+        if (pos == null) return;
+        if (level.getBlockEntity(pos) != null) {
+            level.removeBlockEntity(pos);
+        }
+        level.setBlock(pos, Blocks.AIR.defaultBlockState(),
+                Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SUPPRESS_DROPS);
+    }
+
+    private static void restoreCarriedPart(Level level, BlockPos pos, BlockState state, CompoundTag nbt) {
+        if (pos == null || state == null) return;
+        level.setBlock(pos, state, 3);
+        net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(pos);
+        if (nbt != null && be != null) {
+            be.load(nbt);
+            be.setChanged();
+        }
     }
 
     private static boolean inPickupRange(ServerPlayer player, BlockPos pos) {

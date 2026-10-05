@@ -45,6 +45,12 @@ public class CarryClientEvents {
         LocalPlayer player = mc.player;
         var data = CarryClientContext.get(player.getUUID());
 
+        if (!event.isUseItem() && ModKeybinds.GRAB_KEY.isDown()) {
+            event.setSwingHand(false);
+            event.setCanceled(true);
+            return;
+        }
+
         if (data.isEmpty()) return;
 
         if (event.isUseItem()) {
